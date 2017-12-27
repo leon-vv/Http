@@ -5,11 +5,7 @@ import Record.JS
 
 import IdrisScript
 
-%include Node "runtime.js"
-
-export
-httpServer_ : JS_IO JSRef
-httpServer_ = jscall "httpServer.getValue()" (JS_IO JSRef)
+%include Node "Http/runtime.js"
 
 export
 Request : Type
@@ -21,9 +17,9 @@ Response = JSRef
 
 export
 httpServer : Event (Request, Response)
-httpServer = ioToEvent {schema=[("request", JSRef), ("response", JSRef)]} 
-                httpServer_
+httpServer = map 
                 (\r => (r .. "request", r .. "response"))
+                (Event.JS.fromString {sch=[("request", JSRef), ("response", JSRef)]} "httpServer")
 
 export
 write : Response -> String -> JS_IO ()
