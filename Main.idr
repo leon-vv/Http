@@ -4,8 +4,6 @@ import Html
 
 import Record.JS
 
-%include Node "../Event/runtime.js"
-
 page : Html
 page = tagc "html" [tag "head", tagc "body" [text "Some text"]]
 
