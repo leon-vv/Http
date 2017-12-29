@@ -16,11 +16,11 @@ Response : Type
 Response = JSRef
 
 export
-httpServer : Event (Request, Response)
-httpServer = map 
-                (\r => (r .. "request", r .. "response"))
-                (Event.JS.fromString {sch=[("request", JSRef), ("response", JSRef)]} "httpServer")
-
+httpServer : JS_IO (Event (Request, Response))
+httpServer = do
+    serverEvent <- Event.JS.fromString {sch=[("request", JSRef), ("response", JSRef)]} "httpServer"
+    pure (map (\r => (r .. "request", r .. "response")) serverEvent)
+      
 export
 write : Response -> String -> JS_IO ()
 write = jscall "%0.end(%1)" (JSRef -> String -> JS_IO ()) 

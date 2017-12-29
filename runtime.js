@@ -1,6 +1,6 @@
 const http = require('http')
 
-var httpServer = new Event(function(cb) {
+var httpServer = eventGenerator(function(cb) {
 
     var argumentsToObject = function(req, res) {
         cb({
