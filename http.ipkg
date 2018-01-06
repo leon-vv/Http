@@ -1,0 +1,5 @@
+package http
+
+pkgs = event, record_, idrisscript
+
+modules = Http
