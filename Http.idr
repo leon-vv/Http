@@ -18,7 +18,7 @@ Response = JSRef
 export
 httpServer : JS_IO (Event (Request, Response))
 httpServer = do
-    serverEvent <- Event.JS.fromString {sch=[("request", JSRef), ("response", JSRef)]} "httpServer"
+    serverEvent <- Event.JS.fromGeneratorString {sch=[("request", JSRef), ("response", JSRef)]} "httpServer"
     pure (map (\r => (r .. "request", r .. "response")) serverEvent)
       
 export
