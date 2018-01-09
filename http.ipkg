@@ -1,5 +1,5 @@
 package http
 
-pkgs = event, record_, idrisscript
+pkgs = event, record_, ferryjs
 
 modules = Http

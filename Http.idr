@@ -1,24 +1,20 @@
 import Event
-
 import Record
-import Record.JS
-
-import IdrisScript
+import FerryJS
 
 %include Node "Http/runtime.js"
 
 export
 Request : Type
-Request = JSRef
+Request = Ptr
 
 export
 Response : Type
-Response = JSRef
-
+Response = Ptr 
 export
 httpServer : JS_IO (Event (Request, Response))
 httpServer = do
-    serverEvent <- Event.JS.fromGeneratorString {sch=[("request", JSRef), ("response", JSRef)]} "httpServer"
+    serverEvent <- Event.JS.fromGeneratorString {sch=[("request", Ptr), ("response", Ptr)]} "httpServer"
     pure (map (\r => (r .. "request", r .. "response")) serverEvent)
       
 export
