@@ -2,7 +2,7 @@ import Event
 import Record
 import FerryJS
 
-%include Node "Http/runtime.js"
+%include Node "http/runtime.js"
 
 export
 Request : Type
