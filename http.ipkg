@@ -1,6 +1,6 @@
 package http
 
-pkgs = event, record_, ferryjs
+pkgs = event, record_, ferryjs, html
 
 modules = Http
 

@@ -1,8 +1,11 @@
 import Event
 import Record
 import FerryJS
+import Html
 
 %include Node "http/runtime.js"
+
+%default total
 
 export
 Request : Type
@@ -11,17 +14,75 @@ Request = Ptr
 export
 Response : Type
 Response = Ptr 
+
 export
+Url : Type
+Url = Ptr
+
+export
+partial
 httpServer : JS_IO (Event (Request, Response))
 httpServer = do
     serverEvent <- Event.JS.fromGeneratorString {sch=[("request", Ptr), ("response", Ptr)]} "httpServer"
     pure (map (\r => (r .. "request", r .. "response")) serverEvent)
       
-export
-write : Response -> String -> JS_IO ()
-write = jscall "%0.end(%1)" (JSRef -> String -> JS_IO ()) 
+splitPath : String -> List String
+splitPath = filter (\p => p /= "") . split (\c => c == '/')
 
 export
-getUrl : Request -> JS_IO String
-getUrl = jscall "%0.url" (JSRef -> JS_IO String)
+write : Response -> String -> JS_IO ()
+write = jscall "%0.end(%1)" (Ptr -> String -> JS_IO ()) 
+
+export
+getUrl : Request -> Url
+getUrl = unsafePerformIO . jscall "url.parse(%0.url)" (Ptr -> JS_IO Ptr)
+
+export
+getPath : Url -> List String
+getPath = splitPath .
+            unsafePerformIO .
+            jscall "%0.pathname" (Ptr -> JS_IO String)
+
+export
+getSearch : Url -> String
+getSearch = unsafePerformIO . jscall "%0.search" (Ptr -> JS_IO String)
+
+export
+getSearchAs : {auto fjs: FromJS (Record sch)} -> Url -> Maybe (Record sch)
+getSearchAs {fjs} {sch} url = unsafePerformIO $
+    Functor.map
+      (\ptr => fromJS {fjs=fjs} {to=Record sch} ptr)
+      (jscall "queryString.parse(%0)" (String -> JS_IO Ptr) (getSearch url))
+
+public export
+data Endpoint : Type -> Type -> Type where
+  MkEndpoint : {auto fjs: FromJS (Record sch)}
+                  -> List String 
+                  -> (begin -> Record sch -> JS_IO end)
+                  -> Endpoint begin end
+
+endpointMatchesPath : List String -> Endpoint _ _ -> Bool
+endpointMatchesPath p1 (MkEndpoint p2 _) = p1 == p2
+
+export
+matchEndpoints : List (Endpoint start end) -> start -> Request -> Maybe (JS_IO end)
+matchEndpoints ends start req =
+  let url = getUrl req
+  in case (filter (endpointMatchesPath $ getPath url) ends) of
+        [] =>
+             Nothing
+        ((MkEndpoint {fjs} path execute)::_) => 
+              map
+                (\rec => execute start rec)
+                (getSearchAs {fjs=fjs} url)
+
+
+
+
+
+
+
+
+
+
 
