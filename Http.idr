@@ -54,28 +54,6 @@ getSearchAs {fjs} {sch} url = unsafePerformIO $
       (\ptr => fromJS {fjs=fjs} {to=Record sch} ptr)
       (jscall "queryString.parse(%0)" (String -> JS_IO Ptr) (getSearch url))
 
-public export
-data Endpoint : Type -> Type -> Type where
-  MkEndpoint : {auto fjs: FromJS (Record sch)}
-                  -> List String 
-                  -> (begin -> Record sch -> JS_IO end)
-                  -> Endpoint begin end
-
-endpointMatchesPath : List String -> Endpoint _ _ -> Bool
-endpointMatchesPath p1 (MkEndpoint p2 _) = p1 == p2
-
-export
-matchEndpoints : List (Endpoint start end) -> start -> Request -> Maybe (JS_IO end)
-matchEndpoints ends start req =
-  let url = getUrl req
-  in case (filter (endpointMatchesPath $ getPath url) ends) of
-        [] =>
-             Nothing
-        ((MkEndpoint {fjs} path execute)::_) => 
-              map
-                (\rec => execute start rec)
-                (getSearchAs {fjs=fjs} url)
-
 
 
 
