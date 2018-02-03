@@ -1,7 +1,7 @@
 import Event
+
 import Record
 import FerryJS
-import Html
 
 %include Node "http/runtime.js"
 
@@ -21,10 +21,17 @@ Url = Ptr
 
 export
 partial
-httpServer : JS_IO (Event (Request, Response))
-httpServer = do
-    serverEvent <- Event.JS.fromGeneratorString {sch=[("request", Ptr), ("response", Ptr)]} "httpServer"
-    pure (map (\r => (r .. "request", r .. "response")) serverEvent)
+httpServer : Nat -> Event (Request, Response)
+httpServer port =
+    let serv = (jscall """(function() {
+              var server = http.createServer();
+              server.listen(%0)
+              return server
+            })()"""
+            (Int -> JS_IO Ptr)
+            (cast port))
+    in let singlified = map (singlifyNativeEvent Node) serv
+    in ptrToEvent {to=(Ptr, Ptr)} Node singlified "request"
       
 splitPath : String -> List String
 splitPath = filter (\p => p /= "") . split (\c => c == '/')
@@ -48,17 +55,11 @@ getSearch : Url -> String
 getSearch = unsafePerformIO . jscall "%0.search" (Ptr -> JS_IO String)
 
 export
-getSearchAs : {auto fjs: FromJS (Record sch)} -> Url -> Maybe (Record sch)
-getSearchAs {fjs} {sch} url = unsafePerformIO $
+getSearchAs : {auto ti: ToIdris (Record sch)} -> Url -> Maybe (Record sch)
+getSearchAs {ti} {sch} url = unsafePerformIO $
     Functor.map
-      (\ptr => fromJS {fjs=fjs} {to=Record sch} ptr)
+      (\ptr => toIdris {ti=ti} {to=Record sch} ptr)
       (jscall "queryString.parse(%0)" (String -> JS_IO Ptr) (getSearch url))
-
-
-
-
-
-
 
 
 
