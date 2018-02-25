@@ -21,9 +21,10 @@ Url = Ptr
 
 -- Server pointer and port.
 -- Port cannot be made an argument
--- of the listen function, since
--- this will break if listen is called 
--- twice with two different port numbers.
+-- of the listen function.
+-- This will break if listen is called 
+-- twice with two different port numbers
+-- because the server object does not change.
 export
 HttpServer : Type
 HttpServer = (Ptr, Nat) 
