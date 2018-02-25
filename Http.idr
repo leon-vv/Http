@@ -19,20 +19,32 @@ export
 Url : Type
 Url = Ptr
 
+-- Server pointer and port.
+-- Port cannot be made an argument
+-- of the listen function, since
+-- this will break if listen is called 
+-- twice with two different port numbers.
+export
+HttpServer : Type
+HttpServer = (Ptr, Nat) 
+
+export
+httpServer : Nat -> HttpServer
+httpServer port =
+  (unsafePerformIO $
+    (jscall "http.createServer()"
+    (JS_IO Ptr)), port)
+      
 export
 partial
-httpServer : Nat -> Event (Request, Response)
-httpServer port =
-    let serv = (jscall """(function() {
-              var server = http.createServer();
-              server.listen(%0)
-              return server
-            })()"""
-            (Int -> JS_IO Ptr)
-            (cast port))
-    in let singlified = map (singlifyNativeEvent Node) serv
-    in ptrToEvent {to=(Ptr, Ptr)} Node singlified "request"
-      
+listen : HttpServer -> Event (Request, Response)
+listen (server, port) =
+  let listenIO = jscall "%0.listen(%1)" (Ptr -> Int -> JS_IO ()) server (cast port)
+  in let ptrIO = listenIO *> pure server
+  in let singlified = map (singlifyNativeEvent Node) ptrIO
+  in ptrToEvent {to=(Ptr, Ptr)} Node singlified "request"
+
+
 splitPath : String -> List String
 splitPath = filter (\p => p /= "") . split (\c => c == '/')
 
