@@ -54,6 +54,10 @@ write : Response -> String -> JS_IO ()
 write = jscall "%0.end(%1)" (Ptr -> String -> JS_IO ()) 
 
 export
+setHeader : Response -> String -> String -> JS_IO ()
+setHeader = jscall "%0.setHeader(%1, %2)" (Ptr -> String -> String -> JS_IO ())
+
+export
 getUrl : Request -> Url
 getUrl = unsafePerformIO . jscall "url.parse(%0.url)" (Ptr -> JS_IO Ptr)
 
