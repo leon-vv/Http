@@ -1,7 +1,9 @@
 import Event
 
 import Record
+
 import FerryJS
+import FerryJS.Util
 
 %include Node "http/runtime.js"
 
@@ -38,7 +40,7 @@ httpServer port =
       
 export
 partial
-listen : HttpServer -> Event (Request, Response)
+listen : HttpServer -> Event Multiple (Request, Response)
 listen (server, port) =
   let listenIO = jscall "%0.listen(%1)" (Ptr -> Int -> JS_IO ()) server (cast port)
   in let ptrIO = listenIO *> pure server
@@ -69,16 +71,14 @@ getPath = splitPath .
 
 export
 getSearch : Url -> String
-getSearch = unsafePerformIO . jscall "%0.search" (Ptr -> JS_IO String)
+getSearch = unsafePerformIO . jscall "%0.query" (Ptr -> JS_IO String)
 
 export
 getSearchAs : {auto ti: ToIdris (Record sch)} -> Url -> Maybe (Record sch)
-getSearchAs {ti} {sch} url = unsafePerformIO $
-    Functor.map
-      (\ptr => toIdris {ti=ti} {to=Record sch} ptr)
-      (jscall "queryString.parse(%0)" (String -> JS_IO Ptr) (getSearch url))
-
-
+getSearchAs {ti} {sch} url =
+  unsafePerformIO $
+    toIdris {ti=ti} {to=Record sch} <$>
+      jscall "querystring.parse(%0)" (String -> JS_IO Ptr) (getSearch url)
 
 
 
