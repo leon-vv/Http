@@ -1,3 +1,9 @@
+{- This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/. -}
+
+module Http
+
 import Event
 
 import Record
@@ -31,12 +37,14 @@ export
 HttpServer : Type
 HttpServer = (Ptr, Nat) 
 
+||| Return an Ht
 export
 httpServer : Nat -> HttpServer
 httpServer port =
   (unsafePerformIO $
     (jscall "http.createServer()"
-    (JS_IO Ptr)), port)
+    (JS_IO Ptr)))
+      `MkPair` port
       
 export
 partial
@@ -51,6 +59,7 @@ listen (server, port) =
 splitPath : String -> List String
 splitPath = filter (\p => p /= "") . split (\c => c == '/')
 
+||| Write the string to Response and close the connection.
 export
 write : Response -> String -> JS_IO ()
 write = jscall "%0.end(%1)" (Ptr -> String -> JS_IO ()) 
@@ -70,15 +79,16 @@ getPath = splitPath .
             jscall "%0.pathname" (Ptr -> JS_IO String)
 
 export
-getSearch : Url -> String
-getSearch = unsafePerformIO . jscall "%0.query" (Ptr -> JS_IO String)
+getQuery : Url -> String
+getQuery = unsafePerformIO . jscall "%0.query" (Ptr -> JS_IO String)
 
+||| Try to convert the query part of the URL to the given record.
 export
-getSearchAs : {auto ti: ToIdris (Record sch)} -> Url -> Maybe (Record sch)
-getSearchAs {ti} {sch} url =
+getQueryAs : {auto ti: ToIdris (Record sch)} -> Url -> Maybe (Record sch)
+getQueryAs {ti} {sch} url =
   unsafePerformIO $
     toIdris {ti=ti} {to=Record sch} <$>
-      jscall "querystring.parse(%0)" (String -> JS_IO Ptr) (getSearch url)
+      jscall "querystring.parse(%0)" (String -> JS_IO Ptr) (getQuery url)
 
 
 
