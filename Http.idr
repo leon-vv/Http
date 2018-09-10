@@ -69,6 +69,11 @@ setHeader : Response -> String -> String -> JS_IO ()
 setHeader = jscall "%0.setHeader(%1, %2)" (Ptr -> String -> String -> JS_IO ())
 
 export
+setStatusCode : Response -> Nat -> JS_IO ()
+setStatusCode res code =
+  jscall "%0.statusCode = %1" (Ptr -> Int -> JS_IO()) res (cast code)
+
+export
 getUrl : Request -> Url
 getUrl = unsafePerformIO . jscall "url.parse(%0.url)" (Ptr -> JS_IO Ptr)
 
